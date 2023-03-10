@@ -37,14 +37,23 @@ Spacecraft::Spacecraft()
     this->simTimePrevious = 0;
     this->dvAccum_CN_B.setZero();
     this->dvAccum_BN_B.setZero();
+    this->spacecraftID = this->spacecraftCounter;
+    this->spacecraftCounter++;
 
     // - Set integrator as RK4 by default
     this->integrator = new svIntegratorRK4(this);
 }
 
+uint64_t Spacecraft::spacecraftCounter = 1;
+
 /*! This is the destructor, nothing to report here */
 Spacecraft::~Spacecraft()
 {
+<<<<<<< HEAD
+=======
+    this->spacecraftCounter = 1;    /* reset the spacecraft ID*/
+    return;
+>>>>>>> 5e93a7501 (Add spacecraftID variable to spacecraft and dynamicEffectors modules)
 }
 
 
@@ -264,7 +273,7 @@ void Spacecraft::initializeDynamics()
     std::vector<DynamicEffector*>::iterator dynIt;
     for(dynIt = this->dynEffectors.begin(); dynIt != this->dynEffectors.end(); dynIt++)
     {
-        (*dynIt)->linkInStates(this->dynManager);
+        (*dynIt)->linkInStates(this->dynManager, this->spacecraftID);
     }
 
     // If set, read in and prescribe attitude reference motion as initial states
@@ -358,7 +367,7 @@ void Spacecraft::equationsOfMotion(double integTimeSeconds, double timeStep)
     for(dynIt = this->dynEffectors.begin(); dynIt != this->dynEffectors.end(); dynIt++)
     {
         // - Compute the force and torque contributions from the dynamicEffectors
-        (*dynIt)->computeForceTorque(integTimeSeconds, timeStep);
+        (*dynIt)->computeForceTorque(integTimeSeconds, timeStep, this->spacecraftID);
         this->sumForceExternal_N += (*dynIt)->forceExternal_N;
         this->sumForceExternal_B += (*dynIt)->forceExternal_B;
         this->sumTorquePntB_B += (*dynIt)->torqueExternalPntB_B;

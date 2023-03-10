@@ -92,6 +92,9 @@ public:
     void postIntegration(double callTime) final;      //!< -- method to perform post-integration steps
 
 private:
+    static uint64_t spacecraftCounter;   //!< [] ID counter of previously generated spacecraft
+    uint64_t spacecraftID;               //!< [] ID number of this spacecraft
+
     StateData *hubR_N;                          //!< -- State data accesss to inertial position for the hub
     StateData *hubV_N;                          //!< -- State data access to inertial velocity for the hub
     StateData *hubOmega_BN_B;                   //!< -- State data access to the attitude rate of the hub
@@ -100,7 +103,6 @@ private:
     StateData *BcGravVelocity;                  //!< -- State data access to the gravity-accumulated DV on point Bc
     Eigen::MatrixXd *inertialPositionProperty;  //!< [m] r_N inertial position relative to system spice zeroBase/refBase
     Eigen::MatrixXd *inertialVelocityProperty;  //!< [m] v_N inertial velocity relative to system spice zeroBase/refBase
-
 
     Eigen::MatrixXd *m_SC;               //!< [kg] spacecrafts total mass
     Eigen::MatrixXd *mDot_SC;            //!< [kg/s] Time derivative of spacecrafts total mass

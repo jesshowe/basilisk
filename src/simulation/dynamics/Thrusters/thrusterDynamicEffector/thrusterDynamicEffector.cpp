@@ -228,7 +228,8 @@ void ThrusterDynamicEffector::UpdateThrusterProperties()
  @return void
  @param states The states to link
  */
-void ThrusterDynamicEffector::linkInStates(DynParamManager& states){
+void ThrusterDynamicEffector::linkInStates(DynParamManager& states, uint64_t spacecraftID)
+{
     this->hubSigma = states.getStateObject("hubSigma");
 	this->hubOmega = states.getStateObject("hubOmega");
     this->inertialPositionProperty = states.getPropertyReference("r_BN_N");
@@ -239,7 +240,7 @@ void ThrusterDynamicEffector::linkInStates(DynParamManager& states){
  @param integTime Integration time
  @param timeStep Current integration time step used
  */
-void ThrusterDynamicEffector::computeForceTorque(double integTime, double timeStep)
+void ThrusterDynamicEffector::computeForceTorque(double integTime, double timeStep, uint64_t spacecraftID)
 {
     // Save omega_BN_B
     Eigen::Vector3d omegaLocal_BN_B = this->hubOmega->getState();
