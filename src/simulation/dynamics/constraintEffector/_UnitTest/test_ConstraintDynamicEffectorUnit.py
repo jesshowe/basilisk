@@ -35,7 +35,7 @@ from Basilisk.utilities import SimulationBaseClass, unitTestSupport, orbitalMoti
 from Basilisk.simulation import spacecraft, constraintDynamicEffector, gravityEffector, svIntegrators
 import matplotlib.pyplot as plt
 import numpy as np
-
+import time
 
 
 # uncomment this line is this test is to be skipped in the global unit test run, adjust message as needed
@@ -54,6 +54,7 @@ def constraintEffectorTest(show_plots):
 
 def test_constraintEffector(show_plots):
     # __tracebackhide__ = True
+    t = time.time()
 
     # Test info
     testFailCount = 0  # zero unit test result counter
@@ -196,6 +197,9 @@ def test_constraintEffector(show_plots):
 
     # Grab the time vector
     timeData = psi_B1[:, 0] * macros.NANO2SEC
+
+    # Print Runtime
+    print('Elapsed Time = ' + str(time.time()-t) + ' seconds')
 
     # Plotting
     plt.close("all")

@@ -83,6 +83,7 @@ void ConstraintDynamicEffector::Reset(uint64_t CurrentSimNanos)
  */
 void ConstraintDynamicEffector::linkInStates(DynParamManager& states, uint64_t spacecraftID)
 {
+    // std::cout << "link in states called = ";
     if (this->scInitCounter > 1) {
         bskLogger.bskLog(BSK_ERROR, "constraintDynamicEffector: tried to attach more than 2 spacecraft");
     }
@@ -108,6 +109,12 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
     if (this->scInitCounter == 2) {
         // assigning the constraint force and torque from stored values
         if (spacecraftID == scIDs[0]) {
+            // std::cout << "-----calculating forces & torques-------------------\n";
+            // std::cout.precision(16);
+            // std::cout << std::scientific;
+            // std::cout << "timestep = " << timeStep << "\n";
+            // std::cout << "integTime = " << integTime << "\n";
+
             // - Collect states from both spacecraft
             Eigen::Vector3d r_B1N_N = this->hubPosition[0]->getState();
             Eigen::Vector3d rDot_B1N_N = this->hubVelocity[0]->getState();
@@ -119,6 +126,17 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
             Eigen::Vector3d omega_B2N_B2 = this->hubOmega[1]->getState();
             Eigen::MRPd sigma_B2N;
             sigma_B2N = (Eigen::Vector3d)this->hubSigma[1]->getState();
+
+            // std::cout << "Spacecraft 1 States:\n";
+            // std::cout << "r_B1N_N = \n" << r_B1N_N << "\n";
+            // std::cout << "rDot_B1N_N = \n" << rDot_B1N_N << "\n";
+            // std::cout << "omega_B1N_B1 = \n" << omega_B1N_B1 << "\n";
+            // std::cout << "sigma_B1N = \n" << (Eigen::Vector3d)this->hubSigma[0]->getState() << "\n";
+            // std::cout << "Spacecraft 2 States:\n";
+            // std::cout << "r_B2N_N = \n" << r_B2N_N << "\n";
+            // std::cout << "rDot_B2N_N = \n" << rDot_B2N_N << "\n";
+            // std::cout << "omega_B2N_B2 = \n" << omega_B2N_B2 << "\n";
+            // std::cout << "sigma_B2N = \n" << (Eigen::Vector3d)this->hubSigma[1]->getState() << "\n";
 
             // computing direction constraint psi in the N frame
             Eigen::Matrix3d dcm_B1N = (sigma_B1N.toRotationMatrix()).transpose();
@@ -135,6 +153,7 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
             Eigen::Vector3d rDot_P2P1_N = rDot_P2N_N - rDot_P1N_N;
             Eigen::Vector3d omega_B1N_N = dcm_B1N.transpose() * omega_B1N_B1;
 
+            // std::cout << "dcm_B1N = \n" << dcm_B1N << "\ndcm_B2N = \n" << dcm_B2N << "\nr_P1B1_B1 = \n" << this->r_P1B1_B1 << "\nr_P2P1_B2 = \n" << this->r_P2B2_B2 << "\n";
             // define the constraints
             this->psi_N = r_P2P1_N - dcm_B1N.transpose() * this->r_P2P1_B1Init;
             this->psi_B1 = dcm_B1N * this->psi_N;
@@ -148,6 +167,7 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
             // calculate the difference in attitude
             sigma_B2B1 = eigenMRPd2Vector3d(eigenC2MRP(dcm_B2N * dcm_B1N.transpose()));
 
+            // std::cout << "k = " << this->k << "\npsi = \n" << this->psi_N << "\nc = " << this->c << "\npsiPrime = \n" << this->psiPrime_N << "\n";
             // computing the constraint force
             this->Fc_N = this->k * this->psi_N + this->c * this->psiPrime_N;
             this->forceExternal_N = this->Fc_N;
@@ -171,11 +191,15 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
             // assigning torques for spacecraft 1
             this->forceExternal_N = this->Fc_N;
             this->torqueExternalPntB_B = this->L_B1;
+            // std::cout << "integrating sc1: \nforce 1 = \n" << this->forceExternal_N << "\n";
+            // std::cout << "torque 1 = \n" << this->torqueExternalPntB_B << "\n";
         }
         else if (spacecraftID == scIDs[1]) {
             // assigning torques for spacecraft 2
             this->forceExternal_N = - this->Fc_N;
             this->torqueExternalPntB_B = this->L_B2;
+            // std::cout << "integrating sc2: \nforce 2 = \n" << this->forceExternal_N << "\n";
+            // std::cout << "torque 2 = \n" << this->torqueExternalPntB_B << "\n";
         }
         return;
     }
