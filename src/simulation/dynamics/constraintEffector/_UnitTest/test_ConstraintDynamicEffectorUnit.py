@@ -66,7 +66,7 @@ def test_constraintEffector(show_plots):
     # Create test thread
     unitTaskName = "unitTask"  # arbitrary name (don't change)
     unitProcessName = "TestProcess"  # arbitrary name (don't change)
-    testProcessRate = macros.sec2nano(0.001)  # update process rate update time
+    testProcessRate = macros.sec2nano(1)  # update process rate update time
     testProc = unitTestSim.CreateNewProcess(unitProcessName)
     testProc.addTask(unitTestSim.CreateNewTask(unitTaskName, testProcessRate))
 
@@ -77,10 +77,13 @@ def test_constraintEffector(show_plots):
     scObject2.ModelTag = "spacecraftBody2"
 
     # Set the integrator to RKF45
-    integratorObject1 = svIntegrators.svIntegratorRK4(scObject1)
+    integratorObject1 = svIntegrators.svIntegratorRKF45(scObject1)
     scObject1.setIntegrator(integratorObject1)
-    integratorObject2 = svIntegrators.svIntegratorRK4(scObject2)
-    scObject2.setIntegrator(integratorObject2)
+    #integratorObject2 = svIntegrators.svIntegratorRK4(scObject2)
+    #scObject2.setIntegrator(integratorObject2)
+
+    # Sync dynamics integration across both spacecraft
+    scObject1.syncDynamicsIntegration(scObject2)
 
     # Create the constraint effector module
     constraintEffector = constraintDynamicEffector.ConstraintDynamicEffector()
@@ -95,10 +98,10 @@ def test_constraintEffector(show_plots):
     constraintEffector.r_P1B1_B1 = r_P1B1_B1
     constraintEffector.r_P2B2_B2 = r_P2B2_B2
     constraintEffector.r_P2P1_B1Init = r_P2P1_B1Init
-    constraintEffector.alpha = 1e2
-    constraintEffector.beta = 1e2
-    constraintEffector.K = 100
-    constraintEffector.P = 10
+    constraintEffector.alpha = 1e3
+    constraintEffector.beta = constraintEffector.alpha
+    constraintEffector.K = (constraintEffector.alpha/10)**2
+    constraintEffector.P = 2*constraintEffector.beta/10
     constraintEffector.ModelTag = "constraintEffector"
 
     # Add constraints to both spacecraft
@@ -176,7 +179,7 @@ def test_constraintEffector(show_plots):
     unitTestSim.InitializeSimulation()
 
     # Setup and run the simulation
-    stopTime = 75*60
+    stopTime = 60*120
     unitTestSim.ConfigureStopTime(macros.sec2nano(stopTime))
     unitTestSim.ExecuteSimulation()
 
@@ -200,37 +203,43 @@ def test_constraintEffector(show_plots):
     plt.clf()
     psi_B1 = np.delete(psi_B1, 0, axis=1)
     for i in range(3):
-        plt.plot(timeData/60, psi_B1[:, i])
+        plt.semilogy(timeData/60, np.abs(psi_B1[:, i]))
+    plt.semilogy(timeData/60, np.linalg.norm(psi_B1,axis=1))
+    plt.legend([r'$\psi_1$',r'$\psi_2$',r'$\psi_3$',r'$\psi$ magnitude'])
     plt.xlabel('time (minutes)')
-    plt.ylabel('variation from fixed length: '+r'$\psi$'+' (meters)')
-    plt.title('Length Constraint Components')
+    plt.ylabel(r'variation from fixed length: $\psi$ (meters)')
+    plt.title('Length Constraint Violation Components')
 
     plt.figure()
     plt.clf()
     psiPrime_B1 = np.delete(psiPrime_B1, 0, axis=1)
-    for i in range(3):
-        plt.plot(timeData/60, psiPrime_B1[:, i])
+    #for i in range(3):
+    #    plt.semilogy(timeData/60, np.abs(psiPrime_B1[:, i]))
+    plt.semilogy(timeData/60, np.linalg.norm(psiPrime_B1,axis=1))
     plt.xlabel('time (minutes)')
-    plt.ylabel('magnitude: d'+r'$\psi$'+'/dt (meters/second)')
-    plt.title('Length Rate of Change Constraint Components')
+    plt.ylabel(r'magnitude: d$\psi$/dt (meters/second)')
+    plt.title('Length Rate of Change Constraint Violation Components')
 
     plt.figure()
     plt.clf()
     sigma_B2B1 = np.delete(sigma_B2B1, 0, axis=1)
     for i in range(3):
-        plt.plot(timeData/60, 4*np.arctan(sigma_B2B1[:, i]) * macros.R2D)
+        plt.semilogy(timeData/60, np.abs(4*np.arctan(sigma_B2B1[:, i]) * macros.R2D))
+    plt.semilogy(timeData/60, np.linalg.norm(4*np.arctan(sigma_B2B1) * macros.R2D,axis=1))
+    plt.legend([r'$\phi_1$',r'$\phi_2$',r'$\phi_3$',r'$\phi$ magnitude'])
     plt.xlabel('time (minutes)')
-    plt.ylabel('relative attitude angle: '+r'$\phi$'+' (deg)')
-    plt.title('Attitude Constraint Components')
+    plt.ylabel(r'relative attitude angle: $\phi$ (deg)')
+    plt.title('Attitude Constraint Violation Components')
 
     plt.figure()
     plt.clf()
     omega_B2B1_B2 = np.delete(omega_B2B1_B2, 0, axis=1)
-    for i in range(3):
-        plt.plot(timeData/60, omega_B2B1_B2[:, i] * macros.R2D)
+    #for i in range(3):
+    #    plt.semilogy(timeData/60, np.abs(omega_B2B1_B2[:, i] * macros.R2D))
+    plt.semilogy(timeData/60, np.linalg.norm(omega_B2B1_B2,axis=1))
     plt.xlabel('time (minutes)')
-    plt.ylabel('angular rate: '+r'$\omega$'+' (deg/second)')
-    plt.title('Attitude Rate Constraint Components')
+    plt.ylabel(r'angular rate: $\omega$ (deg/second)')
+    plt.title('Attitude Rate Constraint Violation Components')
 
     if show_plots:
         plt.show()
