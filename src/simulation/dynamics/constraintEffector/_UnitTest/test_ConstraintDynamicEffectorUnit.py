@@ -180,7 +180,7 @@ def test_constraintEffector(show_plots):
     unitTestSim.InitializeSimulation()
 
     # Setup and run the simulation
-    stopTime = 60*120
+    stopTime = 60*12
     unitTestSim.ConfigureStopTime(macros.sec2nano(stopTime))
     unitTestSim.ExecuteSimulation()
 

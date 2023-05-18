@@ -49,11 +49,6 @@ uint64_t Spacecraft::spacecraftCounter = 1;
 /*! This is the destructor, nothing to report here */
 Spacecraft::~Spacecraft()
 {
-<<<<<<< HEAD
-=======
-    this->spacecraftCounter = 1;    /* reset the spacecraft ID*/
-    return;
->>>>>>> 5e93a7501 (Add spacecraftID variable to spacecraft and dynamicEffectors modules)
 }
 
 
