@@ -182,15 +182,27 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
             
             // total torque imparted on spacecraft 2
             this->L_B2 = L_B2_len;
+            // Eigen::Vector3d L_B1_att;
+            // Eigen::Vector3d forceAtP2_B1;
             if (this->K > 0 && this->P > 0)
             {
                 Eigen::Vector3d L_B2_att = -this->K * eigenMRPd2Vector3d(sigma_B2B1) - this->P * 0.25 * sigma_B2B1.Bmat() * omega_B2B1_B2;
+                // Eigen::Vector3d forceAtP2_B2 = eigenTilde(this->r_P2B2_B2) * L_B2_att;
+                // Eigen::Vector3d r_P2B1_B1 = dcm_B1N * (r_P2P1_N + r_P1B1_N);
+                // Eigen::Matrix3d dcm_B1B2 = dcm_B1N * dcm_B2N.transpose();
+                // forceAtP2_B1 = dcm_B1B2 * forceAtP2_B2;
+                // L_B1_att = r_P2B1_B1.cross(forceAtP2_B1);
                 this->L_B2 += L_B2_att;
             }
+            // else
+            // {
+            //     L_B1_att.setZero();
+            //     forceAtP2_B1.setZero();
+            // }
 
             // assigning torques for spacecraft 1
-            this->forceExternal_N = this->Fc_N;
-            this->torqueExternalPntB_B = this->L_B1;
+            this->forceExternal_N = this->Fc_N; // + forceAtP2_B1;
+            this->torqueExternalPntB_B = this->L_B1; // - L_B1_att;
             // std::cout << "integrating sc1: \nforce 1 = \n" << this->forceExternal_N << "\n";
             // std::cout << "torque 1 = \n" << this->torqueExternalPntB_B << "\n";
         }
