@@ -28,6 +28,7 @@
 #include "architecture/messaging/messaging.h"
 
 #include "architecture/utilities/bskLogging.h"
+#include "architecture/utilities/avsEigenMRP.h"
 #include <Eigen/Dense>
 #include <vector>
 

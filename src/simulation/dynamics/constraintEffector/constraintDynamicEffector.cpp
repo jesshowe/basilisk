@@ -165,7 +165,7 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
             omega_B2B1_B2 = omega_B2N_B2 - omega_B1N_B2;
 
             // calculate the difference in attitude
-            sigma_B2B1 = eigenMRPd2Vector3d(eigenC2MRP(dcm_B2N * dcm_B1N.transpose()));
+            Eigen::MRPd sigma_B2B1 = eigenC2MRP(dcm_B2N * dcm_B1N.transpose());
 
             // std::cout << "k = " << this->k << "\npsi = \n" << this->psi_N << "\nc = " << this->c << "\npsiPrime = \n" << this->psiPrime_N << "\n";
             // computing the constraint force
@@ -184,7 +184,7 @@ void ConstraintDynamicEffector::computeForceTorque(double integTime, double time
             this->L_B2 = L_B2_len;
             if (this->K > 0 && this->P > 0)
             {
-                Eigen::Vector3d L_B2_att = -this->K * sigma_B2B1 - this->P * omega_B2B1_B2;
+                Eigen::Vector3d L_B2_att = -this->K * eigenMRPd2Vector3d(sigma_B2B1) - this->P * 0.25 * sigma_B2B1.Bmat() * omega_B2B1_B2;
                 this->L_B2 += L_B2_att;
             }
 
