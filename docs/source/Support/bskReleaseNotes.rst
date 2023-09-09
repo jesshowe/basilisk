@@ -47,7 +47,8 @@ Version |release|
   To convert prior script to use the new syntax, see :ref:`bskPrinciples-2` for the simple new
   syntaxt to add C-modules.
 - Modified :ref:`mrpFeedback` to enable the use of a modified control law, and added the integral control torque feedback output message.
-
+- The Conan dependencies have been fixed to specific recipe versions. To prevent the occasional surprise of a recipe
+  which breaks a Basilisk build, recipe versions will be advanced purposefully rather than automatically.
 
 Version 2.2.0 (June 28, 2023)
 -----------------------------
