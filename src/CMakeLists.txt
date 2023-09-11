@@ -386,6 +386,7 @@ if(MSVC)
   add_definitions(/MP)
   add_definitions(/D _CRT_SECURE_NO_WARNINGS)
   add_definitions(/D _WINSOCK_DEPRECATED_NO_WARNINGS)
+  add_definitions(/D _USE_MATH_DEFINES)
   add_definitions(/D _WIN32_WINNT=0x0501) # Targets Windows xp
   add_definitions(/W3)
   add_definitions(/wd"4913")
