@@ -61,6 +61,9 @@ Version |release|
   To simulate the rotation, this module must be connected to the :ref:`prescribedMotionStateEffector` dynamics module.
 - Created a new example scenario :ref:`scenarioDeployingSolarArrays` demonstrating how to simulate hub-relative
   multi-body prescribed motion.
+- updated the BSK install script to check if the full ``de430.bsp`` file was downloaded.  This addressed
+  a common BSK installation issue where the user doesn't install ``lfs`` first before cloning the repo.
+
 
 Version 2.2.1 (Dec. 22, 2023)
 -----------------------------
