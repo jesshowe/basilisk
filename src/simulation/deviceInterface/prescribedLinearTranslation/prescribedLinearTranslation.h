@@ -37,12 +37,14 @@ public:
     void SelfInit() override;                                               //!< Member function to initialize the C-wrapped output message
     void Reset(uint64_t CurrentSimNanos) override;                          //!< Reset member function
     void UpdateState(uint64_t CurrentSimNanos) override;                    //!< Update member function
-    void setCoastOptionRampDuration(double rampDuration);                   //!< Setter method for the coast option ramp duration
-    void setTransAccelMax(double transAccelMax);                            //!< Setter method for the ramp segment scalar linear acceleration
+    void setCoastOptionRampDuration(double rampDuration);                   //!< Setter method for the coast option bang duration
+    void setSmoothingDuration(double smoothingDuration);                    //!< Setter method for the duration the acceleration is smoothed until reaching the given maximum acceleration value
+    void setTransAccelMax(double transAccelMax);                            //!< Setter method for the bang segment scalar linear acceleration
     void setTransHat_M(const Eigen::Vector3d &transHat_M);                  //!< Setter method for the translating body axis of translation
     void setTransPosInit(double transPosInit);                              //!< Setter method for the initial translating body hub-relative position
-    double getCoastOptionRampDuration() const;                              //!< Getter method for the coast option ramp duration
-    double getTransAccelMax() const;                                        //!< Getter method for the ramp segment scalar linear acceleration
+    double getCoastOptionRampDuration() const;                              //!< Getter method for the coast option bang duration
+    double getSmoothingDuration() const;                                    //!< Getter method for the duration the acceleration is smoothed until reaching the given maximum acceleration value
+    double getTransAccelMax() const;                                        //!< Getter method for the bang segment scalar linear acceleration
     const Eigen::Vector3d &getTransHat_M() const;                           //!< Getter method for the translating body axis of translation
     double getTransPosInit() const;                                         //!< Getter method for the initial translating body position
     
@@ -54,36 +56,57 @@ public:
 
 private:
 
-    /* Coast option member functions */
-    bool isInFirstRampSegment(double time) const;               //!< Method for determining if the current time is within the first ramp segment for the coast option
-    bool isInCoastSegment(double time) const;                   //!< Method for determining if the current time is within the coast segment for the coast option
-    bool isInSecondRampSegment(double time) const;              //!< Method for determining if the current time is within the second ramp segment for the coast option
-    void computeCoastParameters();                              //!< Method for computing the required parameters for the translation with a coast period
-    void computeCoastSegment(double time);                      //!< Method for computing the scalar translational states for the coast option coast period
+    /* Non-smoothed bang-bang option member functions */
+    void computeBangBangParametersNoSmoothing();                        //!< Method for computing the required parameters for the translation with a non-smoothed bang-bang acceleration profile
 
-    /* Non-coast option member functions */
-    bool isInFirstRampSegmentNoCoast(double time) const;        //!< Method for determining if the current time is within the first ramp segment for the no coast option
-    bool isInSecondRampSegmentNoCoast(double time) const;       //!< Method for determining if the current time is within the second ramp segment for the no coast option
-    void computeParametersNoCoast();                            //!< Method for computing the required parameters for the translation with no coast period
+    /* Non-smoothed bang-coast-bang option member functions */
+    void computeBangCoastBangParametersNoSmoothing();                   //!< Method for computing the required parameters for the non-smoothed bang-coast-bang option
+
+    /* Smoothed bang-bang option member functions */
+    void computeSmoothedBangBangParameters();                           //!< Method for computing the required parameters for the translation with a smoothed bang-bang acceleration profile
+
+    /* Smoothed bang-coast-bang member functions */
+    void computeSmoothedBangCoastBangParameters();                      //!< Method for computing the required parameters for the smoothed bang-coast-bang option
+    bool isInFourthSmoothedSegment(double time) const;                  //!< Method for determining if the current time is within the fourth smoothing segment for the smoothed bang-coast-bang option
+    void computeFourthSmoothedSegment(double time);                     //!< Method for computing the fourth smoothing segment scalar translational states for the smoothed bang-coast-bang option
 
     /* Shared member functions */
-    void computeFirstRampSegment(double time);                  //!< Method for computing the scalar translational states for the first ramp segment
-    void computeSecondRampSegment(double time);                 //!< Method for computing the scalar translational states for the second ramp segment
+    void computeCoastSegment(double time);                      //!< Method for computing the coast segment scalar translational states
+    void computeFirstBangSegment(double time);                  //!< Method for computing the first bang segment scalar translational states
+    void computeFirstSmoothedSegment(double time);              //!< Method for computing the first smoothing segment scalar translational states for the smoothed profiler options
+    void computeSecondBangSegment(double time);                 //!< Method for computing the second bang segment scalar translational states
+    void computeSecondSmoothedSegment(double time);             //!< Method for computing the second smoothing segment scalar translational states for the smoothed profiler options
+    void computeThirdSmoothedSegment(double time);              //!< Method for computing the third smoothing segment scalar translational states for the smoothed profiler options
     void computeTranslationComplete();                          //!< Method for computing the scalar translational states when the translation is complete
+    bool isInCoastSegment(double time) const;                   //!< Method for determining if the current time is within the coast segment
+    bool isInFirstBangSegment(double time) const;               //!< Method for determining if the current time is within the first bang segment
+    bool isInFirstSmoothedSegment(double time) const;           //!< Method for determining if the current time is within the first smoothing segment for the smoothed profiler options
+    bool isInSecondBangSegment(double time) const;              //!< Method for determining if the current time is within the second bang segment
+    bool isInSecondSmoothedSegment(double time) const;          //!< Method for determining if the current time is within the second smoothing segment for the smoothed profiler options
+    bool isInThirdSmoothedSegment(double time) const;           //!< Method for determining if the current time is within the third smoothing segment for the smoothed profiler options
 
     /* User-configurable variables */
-    double coastOptionRampDuration;                             //!< [s] Ramp time used for the coast option
+    double coastOptionRampDuration;                             //!< [s] Time used for the coast option bang segment
+    double smoothingDuration;                                   //!< [s] Time the acceleration is smoothed to the given maximum acceleration value
     double transAccelMax;                                       //!< [m/s^2] Maximum acceleration magnitude
     Eigen::Vector3d transHat_M;                                 //!< Axis along the direction of translation expressed in M frame components
 
-    /* Coast option variables */
-    double transPos_tr;                                         //!< [m] Position at the end of the first ramp segment
-    double transVel_tr;                                         //!< [m/s] Velocity at the end of the first ramp segment
-    double tr;                                                  //!< [s] The simulation time at the end of the first ramp segment
-    double tc;                                                  //!< [s] The simulation time at the end of the coast period
+    /* Non-smoothed bang-coast-bang option variables */
+    double transPos_ts1;
+    double transVel_ts1;
+    double transPos_tb1;                                         //!< [m] Position at the end of the first bang segment
+    double transVel_tb1;                                         //!< [m/s] Velocity at the end of the first bang segment
+    double transPos_ts2;
+    double transVel_ts2;
+    double transPos_tc;
+    double transVel_tc;
+    double transPos_ts3;
+    double transVel_ts3;
+    double transPos_tb2;
+    double transVel_tb2;
 
-    /* Non-coast option variables */
-    double ts;                                                  //!< [s] The simulation time halfway through the translation
+    /* Smoothed bang-coast-bang option variables */
+    double t_s3;
 
     /* Shared module variables */
     double transPos;                                            //!< [m] Current translational body position along transHat_M
@@ -93,7 +116,12 @@ private:
     double tInit;                                               //!< [s] Simulation time at the beginning of the translation
     double transPosInit;                                        //!< [m] Initial translational body position from M to F frame origin along transHat_M
     double transPosRef;                                         //!< [m] Reference translational body position from M to F frame origin along transHat_M
-    double tf;                                                  //!< [s] The simulation time when the translation is complete
+    double t_b1;
+    double t_b2;
+    double t_c;
+    double t_f;                                                  //!< [s] The simulation time when the translation is complete
+    double t_s1;
+    double t_s2;
     double a;                                                   //!< Parabolic constant for the first half of the translation
     double b;                                                   //!< Parabolic constant for the second half of the translation
 };
