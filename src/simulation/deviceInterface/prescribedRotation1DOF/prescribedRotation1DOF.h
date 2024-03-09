@@ -33,15 +33,19 @@ public:
     PrescribedRotation1DOF() = default;                                    //!< Constructor
     ~PrescribedRotation1DOF() = default;                                   //!< Destructor
 
-    void SelfInit() override;                                               //!< Member function to initialize the C-wrapped output message
+    void SelfInit() override;                                              //!< Member function to initialize the C-wrapped output message
     void Reset(uint64_t CurrentSimNanos) override;                         //!< Reset member function
     void UpdateState(uint64_t CurrentSimNanos) override;                   //!< Update member function
     void setCoastOptionRampDuration(double rampDuration);                  //!< Setter for the coast option ramp duration
+
     void setRotHat_M(const Eigen::Vector3d &rotHat_M);                     //!< Setter for the spinning body rotation axis
+    void setSmoothingDuration(double smoothingDuration);                    //!< Setter method for the duration the acceleration is smoothed until reaching the given maximum acceleration value
+
     void setThetaDDotMax(double thetaDDotMax);                             //!< Setter for the ramp segment scalar angular acceleration
     void setThetaInit(double thetaInit);                                   //!< Setter for the initial spinning body angle
     double getCoastOptionRampDuration() const;                             //!< Getter for the coast option ramp duration
     const Eigen::Vector3d &getRotHat_M() const;                            //!< Getter for the spinning body rotation axis
+    double getSmoothingDuration() const;                                    //!< Getter method for the duration the acceleration is smoothed until reaching the given maximum acceleration value
     double getThetaDDotMax() const;                                        //!< Getter for the ramp segment scalar angular acceleration
     double getThetaInit() const;                                           //!< Getter for the initial spinning body angle
 
@@ -55,52 +59,76 @@ public:
 
 private:
 
-    /* Coast option member functions */
-    bool isInFirstRampSegment(double time) const;               //!< Method for determining if the current time is within the first ramp segment for the coast option
-    bool isInCoastSegment(double time) const;                   //!< Method for determining if the current time is within the coast segment for the coast option
-    bool isInSecondRampSegment(double time) const;              //!< Method for determining if the current time is within the second ramp segment for the coast option
-    void computeCoastParameters();                              //!< Method for computing the required parameters for the rotation with a coast period
-    void computeCoastSegment(double time);                      //!< Method for computing the scalar rotational states for the coast option coast period
+        /* Non-smoothed bang-bang option member functions */
+        void computeBangBangParametersNoSmoothing();                        //!< Method for computing the required parameters for the rotation with a non-smoothed bang-bang acceleration profile
 
-    /* Non-coast option member functions */
-    bool isInFirstRampSegmentNoCoast(double time) const;        //!< Method for determining if the current time is within the first ramp segment for the no coast option
-    bool isInSecondRampSegmentNoCoast(double time) const;       //!< Method for determining if the current time is within the second ramp segment for the no coast option
-    void computeParametersNoCoast();                            //!< Method for computing the required parameters for the rotation with no coast period
+        /* Non-smoothed bang-coast-bang option member functions */
+        void computeBangCoastBangParametersNoSmoothing();                   //!< Method for computing the required parameters for the non-smoothed bang-coast-bang option
 
-    /* Shared member functions */
-    void computeFirstRampSegment(double time);                  //!< Method for computing the scalar rotational states for the first ramp segment
-    void computeSecondRampSegment(double time);                 //!< Method for computing the scalar rotational states for the second ramp segment
-    void computeRotationComplete();                             //!< Method for computing the scalar rotational states when the rotation is complete
-    Eigen::Vector3d computeSigma_FM();                          //!< Method for computing the current spinning body MRP attitude relative to the mount frame: sigma_FM
+        /* Smoothed bang-bang option member functions */
+        void computeSmoothedBangBangParameters();                           //!< Method for computing the required parameters for the rotation with a smoothed bang-bang acceleration profile
 
-    /* User-configurable variables */
-    double coastOptionRampDuration;                             //!< [s] Ramp time used for the coast option
-    double thetaDDotMax;                                        //!< [rad/s^2] Maximum angular acceleration of spinning body used in the ramp segments
-    Eigen::Vector3d rotHat_M;                                   //!< Spinning body rotation axis in M frame components
+        /* Smoothed bang-coast-bang member functions */
+        void computeSmoothedBangCoastBangParameters();                      //!< Method for computing the required parameters for the smoothed bang-coast-bang option
+        bool isInFourthSmoothedSegment(double time) const;                  //!< Method for determining if the current time is within the fourth smoothing segment for the smoothed bang-coast-bang option
+        void computeFourthSmoothedSegment(double time);                     //!< Method for computing the fourth smoothing segment scalar rotational states for the smoothed bang-coast-bang option
 
-    /* Coast option variables */
-    double theta_tr;                                            //!< [rad] Angle at the end of the first ramp segment
-    double theta_tc;                                            //!< [rad] Angle at the end of the coast segment
-    double thetaDot_tr;                                         //!< [rad/s] Angle rate at the end of the first ramp segment
-    double tr;                                                  //!< [s] The simulation time at the end of the first ramp segment
-    double tc;                                                  //!< [s] The simulation time at the end of the coast period
+        /* Shared member functions */
+        void computeCoastSegment(double time);                      //!< Method for computing the coast segment scalar rotational states
+        void computeFirstBangSegment(double time);                  //!< Method for computing the first bang segment scalar rotational states
+        void computeFirstSmoothedSegment(double time);              //!< Method for computing the first smoothing segment scalar rotational states for the smoothed profiler options
+        void computeSecondBangSegment(double time);                 //!< Method for computing the second bang segment scalar rotational states
+        void computeSecondSmoothedSegment(double time);             //!< Method for computing the second smoothing segment scalar rotational states for the smoothed profiler options
+        void computeThirdSmoothedSegment(double time);              //!< Method for computing the third smoothing segment scalar rotational states for the smoothed profiler options
+        void computeRotationComplete();                             //!< Method for computing the scalar rotational states when the rotation is complete
+        bool isInCoastSegment(double time) const;                   //!< Method for determining if the current time is within the coast segment
+        bool isInFirstBangSegment(double time) const;               //!< Method for determining if the current time is within the first bang segment
+        bool isInFirstSmoothedSegment(double time) const;           //!< Method for determining if the current time is within the first smoothing segment for the smoothed profiler options
+        bool isInSecondBangSegment(double time) const;              //!< Method for determining if the current time is within the second bang segment
+        bool isInSecondSmoothedSegment(double time) const;          //!< Method for determining if the current time is within the second smoothing segment for the smoothed profiler options
+        bool isInThirdSmoothedSegment(double time) const;           //!< Method for determining if the current time is within the third smoothing segment for the smoothed profiler options
+        Eigen::Vector3d computeSigma_FM();                          //!< Method for computing the current spinning body MRP attitude relative to the mount frame: sigma_FM
 
-    /* Non-coast option variables */
-    double ts;                                                  //!< [s] The simulation time halfway through the rotation
+        /* User-configurable variables */
+        double coastOptionRampDuration;                             //!< [s] Time used for the coast option bang segment
+        double smoothingDuration;                                   //!< [s] Time the acceleration is smoothed to the given maximum acceleration value
+        double thetaDDotMax;                                        //!< [rad/s^2] Maximum angular acceleration of spinning body used in the ramp segments
+        Eigen::Vector3d rotHat_M;                                   //!< Spinning body rotation axis in M frame components
 
-    /* Shared module variables */
-    double theta;                                               //!< [rad] Current angle
-    double thetaDot;                                            //!< [rad/s] Current angle rate
-    double thetaDDot;                                           //!< [rad/s^2] Current angular acceleration
-    bool convergence;                                           //!< Boolean variable is true when the rotation is complete
-    double tInit;                                               //!< [s] Simulation time at the beginning of the rotation
-    double thetaInit;                                           //!< [rad] Initial spinning body angle from frame M to frame F about rotHat_M
-    double thetaDotInit;                                        //!< [rad/s] Initial spinning body angle rate between frame M to frame F
-    double thetaRef;                                            //!< [rad] Spinning body reference angle from frame M to frame F about rotHat_M
-    double tf;                                                  //!< [s] Simulation time when the rotation is complete
-    double a;                                                   //!< Parabolic constant for the first acceleration segment
-    double b;                                                   //!< Parabolic constant for the second acceleration segment
+        /* Non-smoothed bang-coast-bang option variables */
+        double theta_ts1;
+        double thetaDot_ts1;
+        double theta_tb1;                                         //!< [m] Position at the end of the first bang segment
+        double thetaDot_tb1;                                         //!< [m/s] Velocity at the end of the first bang segment
+        double theta_ts2;
+        double thetaDot_ts2;
+        double theta_tc;
+        double thetaDot_tc;
+        double theta_ts3;
+        double thetaDot_ts3;
+        double theta_tb2;
+        double thetaDot_tb2;
 
+        /* Smoothed bang-coast-bang option variables */
+        double t_s3;
+
+        /* Shared module variables */
+        double theta;                                               //!< [rad] Current angle
+        double thetaDot;                                            //!< [rad/s] Current angle rate
+        double thetaDDot;                                           //!< [rad/s^2] Current angular acceleration
+        bool convergence;                                           //!< Boolean variable is true when the rotation is complete
+        double tInit;                                               //!< [s] Simulation time at the beginning of the rotation
+        double thetaInit;                                           //!< [rad] Initial spinning body angle from frame M to frame F about rotHat_M
+        double thetaDotInit;                                        //!< [rad/s] Initial spinning body angle rate between frame M to frame F
+        double thetaRef;                                            //!< [rad] Spinning body reference angle from frame M to frame F about rotHat_M
+        double t_b1;
+        double t_b2;
+        double t_c;
+        double t_f;                                                  //!< [s] The simulation time when the rotation is complete
+        double t_s1;
+        double t_s2;
+        double a;                                                   //!< Parabolic constant for the first half of the rotation
+        double b;                                                   //!< Parabolic constant for the second half of the rotation
 };
 
 #endif
