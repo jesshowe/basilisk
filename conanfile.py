@@ -185,6 +185,9 @@ class BasiliskConan(ConanFile):
 
         if self.options.vizInterface or self.options.opNav:
             self.requires.add("protobuf/3.17.1")
+            self.options['protobuf'].CXX = 'g++-11'
+            self.options['protobuf'].CC = 'gcc-11'
+            self.options['protobuf'].compiler = 'gcc-11'
             self.options['zeromq'].encryption = False  # Basilisk does not use data streaming encryption.
             self.requires.add("cppzmq/4.5.0")
 
